@@ -6,7 +6,7 @@
     {
       "id": "US-001",
       "title": "Add Google OCR engine with API key authentication",
-      "description": "Update the existing engines/google.py to support API key authentication (checking GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY in order) with ADC fallback. The google-cloud-vision dependency is already in pyproject.toml. The engine must use document_text_detection for image files, validate input files, and return extracted text. Add comprehensive unit tests.",
+      "description": "Update the existing engines/google.py to support API key authentication (checking GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY in order) with ADC fallback. The google-cloud-vision dependency is already in pyproject.toml. The engine must use document_text_detection for image files, validate input files, and return extracted text. Update existing tests and add new ones for API key paths.",
       "acceptanceCriteria": [
         "google-cloud-vision is listed in packages/ocr_tool/pyproject.toml dependencies",
         "uv lock completes without errors after any dependency changes",
@@ -21,7 +21,7 @@
       "priority": 1,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "A basic engines/google.py already exists (ADC-only, no API key support). Update it to add API key auth per the acceptance criteria. Use document_text_detection (not text_detection) as it provides better structured results. For API key auth, pass client_options={'api_key': key} to ImageAnnotatorClient(). The env var lookup order is: GOOGLE_API_KEY > GOOGLE_PLACES_API_KEY > GEMINI_API_KEY > ADC. This allows reusing existing Google API keys without needing a service account."
+      "notes": "A basic engines/google.py already exists (ADC-only, no API key support) and 4 tests exist in test_google.py. Update the engine to add API key auth and update/extend the tests. Use document_text_detection (not text_detection) as it provides better structured results. For API key auth, pass client_options={'api_key': key} to ImageAnnotatorClient(). The env var lookup order is: GOOGLE_API_KEY > GOOGLE_PLACES_API_KEY > GEMINI_API_KEY > ADC."
     },
     {
       "id": "US-002",
@@ -38,7 +38,7 @@
       "priority": 2,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": ""
+      "notes": "models.py currently has Literal['local', 'llm'] on lines 17 and 35. service.py currently dispatches with if/else on lines 27-32. Add an elif branch for 'google' mode."
     },
     {
       "id": "US-003",
@@ -73,7 +73,7 @@
       "priority": 4,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "The PDF-with-local-mode validation can live in service.py rather than cli.py — either is acceptable as long as the error is structured."
+      "notes": "cli.py line 39 currently checks `mode not in ('local', 'llm')`. Update to include 'google'. The PDF-with-local-mode validation can live in service.py rather than cli.py — either is acceptable as long as the error is structured."
     },
     {
       "id": "US-005",
@@ -89,7 +89,7 @@
       "priority": 5,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "google-cloud-vision has protobuf-generated types. If mypy complains about missing stubs, add google-cloud-vision stubs or use type: ignore on specific imports. This is acceptable."
+      "notes": "google-cloud-vision has protobuf-generated types. If mypy complains about missing stubs, use type: ignore on specific imports (engines/google.py already does this). This is acceptable."
     }
   ]
 }
