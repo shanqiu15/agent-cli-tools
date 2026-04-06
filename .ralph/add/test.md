@@ -75,16 +75,11 @@ uv lock
 
 ## API Key Authentication Testing
 
-The Google engine supports API key auth via environment variables. To verify auth works in tests, the test suite mocks the client creation. To verify manually:
+The Google engine uses `GOOGLE_API_KEY` for authentication. To verify auth works in tests, the test suite mocks the client creation. To verify manually:
 
 ```bash
-# Set one of these env vars (checked in this order):
 export GOOGLE_API_KEY="your-key"
-# or: export GOOGLE_PLACES_API_KEY="your-key"
-# or: export GEMINI_API_KEY="your-key"
-# Fallback: GOOGLE_APPLICATION_CREDENTIALS or gcloud ADC
 
-# Then run:
 cd packages/ocr_tool
 uv run ocr-tool extract --image test.png --mode google
 ```
