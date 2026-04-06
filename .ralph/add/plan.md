@@ -12,7 +12,7 @@ Replace the low-quality local OCR (easyocr) and expensive LLM-based OCR with Goo
 
 3. **Handle PDF input**: The current code assumes image input (validates with `PIL.Image.open`). The google engine should accept both images and PDFs. The service layer needs to detect file type and call the appropriate Vision API method. The `image_path` field semantics expand to "input file path" (images + PDFs). Consider renaming to `input_path` or keeping as-is with documentation.
 
-4. **Authentication**: Google Cloud Vision uses Application Default Credentials or a service account key via `GOOGLE_APPLICATION_CREDENTIALS` env var. The engine should validate credentials are available before making API calls.
+4. **Authentication**: Support API key authentication first, then fall back to Application Default Credentials (ADC). The engine should check for API keys in this order: `GOOGLE_API_KEY`, `GOOGLE_PLACES_API_KEY`, `GEMINI_API_KEY`. If any is found, create the `ImageAnnotatorClient` with `client_options={"api_key": key}`. If no API key is found, fall back to ADC (`GOOGLE_APPLICATION_CREDENTIALS` or `google.auth.default()`). Raise `OcrError` with code `MISSING_CREDENTIALS` only if all methods fail.
 
 5. **Keep existing engines intact**: local and llm modes remain unchanged. Google is additive.
 
@@ -38,6 +38,12 @@ Replace the low-quality local OCR (easyocr) and expensive LLM-based OCR with Goo
 
 2. **PDF page limit**: Inline `batch_annotate_files` supports up to 5 pages. For longer PDFs, you'd need GCS-based async processing. For now, raise a clear error if the PDF exceeds 5 pages. Document this limitation.
 
-3. **Credential setup friction**: Users need a Google Cloud project with Vision API enabled and credentials configured. The engine should give clear error messages when credentials are missing or the API is not enabled.
+3. **API key compatibility**: Not all Google API keys may have the Cloud Vision API enabled. `GEMINI_API_KEY` (Google AI Studio) and `GOOGLE_PLACES_API_KEY` may be scoped to different APIs. If the Vision API is not enabled for the key's project, the API will return a clear permission error. The engine should surface this error message to the user.
 
 4. **Mypy and type stubs**: `google-cloud-vision` has generated protobuf types that may not play perfectly with mypy. The implementer may need `# type: ignore` on specific imports or a mypy plugin config. This is acceptable.
+
+## Changes
+
+- **Authentication strategy revised** (reviewer feedback): The original plan required `GOOGLE_APPLICATION_CREDENTIALS` or ADC. The reviewer has existing API keys (`GOOGLE_API_KEY`, `GOOGLE_PLACES_API_KEY`, `GEMINI_API_KEY`) and wants to reuse them. The plan now checks for these API keys first (in priority order) and creates the client with `client_options={"api_key": key}`. ADC remains as a fallback. This is simpler for users who already have Google API keys configured.
+- **US-001 acceptance criteria updated** to reflect API key auth support and the env var lookup order.
+- **Risk #3 updated** from "credential setup friction" to "API key compatibility" since the main auth path is now API keys.

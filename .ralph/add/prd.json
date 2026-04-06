@@ -6,20 +6,22 @@
     {
       "id": "US-001",
       "title": "Add google-cloud-vision dependency and create Google OCR engine for images",
-      "description": "Add the google-cloud-vision Python SDK as a dependency and implement a new engine module at engines/google.py that performs text detection on image files using the Vision API. The engine should validate credentials, validate the input file, and return extracted text.",
+      "description": "Add the google-cloud-vision Python SDK as a dependency and implement a new engine module at engines/google.py that performs text detection on image files using the Vision API. The engine should support API key authentication (checking GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY in order) and fall back to Application Default Credentials. It should validate the input file and return extracted text.",
       "acceptanceCriteria": [
         "google-cloud-vision is listed in packages/ocr_tool/pyproject.toml dependencies",
         "uv lock completes without errors after adding the dependency",
         "File packages/ocr_tool/src/ocr_tool/engines/google.py exists and defines a function extract_text_google(file_path: Path, model: str | None = None) -> str",
-        "The function raises OcrError with code MISSING_CREDENTIALS when GOOGLE_APPLICATION_CREDENTIALS is not set and no default credentials are available",
+        "The function checks for API keys in this order: GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY. If found, it creates ImageAnnotatorClient with client_options={'api_key': key}",
+        "If no API key is found, the function falls back to GOOGLE_APPLICATION_CREDENTIALS or google.auth.default()",
+        "The function raises OcrError with code MISSING_CREDENTIALS only when no API key AND no ADC credentials are available",
         "The function raises OcrError with code IMAGE_NOT_FOUND when the input file does not exist",
         "The function uses google.cloud.vision.ImageAnnotatorClient and document_text_detection for image files",
-        "Unit tests exist at tests/test_engines/test_google.py covering: missing credentials, missing file, successful image extraction (mocked), and empty result handling"
+        "Unit tests exist at tests/test_engines/test_google.py covering: missing credentials, missing file, successful image extraction with API key (mocked), successful image extraction with ADC fallback (mocked), and empty result handling"
       ],
       "priority": 1,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "Use document_text_detection (not text_detection) as it provides better structured results. Auth via Application Default Credentials — check with google.auth.default() and raise OcrError if it fails."
+      "notes": "Use document_text_detection (not text_detection) as it provides better structured results. For API key auth, pass client_options={'api_key': key} to ImageAnnotatorClient(). The env var lookup order is: GOOGLE_API_KEY > GOOGLE_PLACES_API_KEY > GEMINI_API_KEY > ADC. This allows reusing existing Google API keys without needing a service account."
     },
     {
       "id": "US-002",
