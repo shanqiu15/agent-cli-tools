@@ -13,6 +13,11 @@ from ocr_tool.service import run_ocr
 app = typer.Typer(add_completion=False)
 
 
+@app.callback()
+def main() -> None:
+    """OCR tool for extracting text from images."""
+
+
 @app.command()
 def extract(
     image: Annotated[Path, typer.Option(help="Path to the input image file")],
