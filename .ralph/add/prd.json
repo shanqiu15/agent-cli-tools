@@ -1,0 +1,93 @@
+{
+  "project": "add",
+  "branchName": "ralph/add",
+  "description": "Add Google Cloud Vision API as an OCR engine with native PDF support",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add google-cloud-vision dependency and create Google OCR engine for images",
+      "description": "Add the google-cloud-vision Python SDK as a dependency and implement a new engine module at engines/google.py that performs text detection on image files using the Vision API. The engine should validate credentials, validate the input file, and return extracted text.",
+      "acceptanceCriteria": [
+        "google-cloud-vision is listed in packages/ocr_tool/pyproject.toml dependencies",
+        "uv lock completes without errors after adding the dependency",
+        "File packages/ocr_tool/src/ocr_tool/engines/google.py exists and defines a function extract_text_google(file_path: Path, model: str | None = None) -> str",
+        "The function raises OcrError with code MISSING_CREDENTIALS when GOOGLE_APPLICATION_CREDENTIALS is not set and no default credentials are available",
+        "The function raises OcrError with code IMAGE_NOT_FOUND when the input file does not exist",
+        "The function uses google.cloud.vision.ImageAnnotatorClient and document_text_detection for image files",
+        "Unit tests exist at tests/test_engines/test_google.py covering: missing credentials, missing file, successful image extraction (mocked), and empty result handling"
+      ],
+      "priority": 1,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "Use document_text_detection (not text_detection) as it provides better structured results. Auth via Application Default Credentials — check with google.auth.default() and raise OcrError if it fails."
+    },
+    {
+      "id": "US-002",
+      "title": "Integrate Google engine into models and service layer",
+      "description": "Expand the OcrRequest mode literal to include 'google', update the service layer to dispatch to the new engine, and wire up the model_used field correctly for the google engine.",
+      "acceptanceCriteria": [
+        "OcrRequest.mode in packages/ocr_tool/src/ocr_tool/models.py accepts Literal['local', 'llm', 'google']",
+        "OcrResult.mode in packages/ocr_tool/src/ocr_tool/models.py accepts Literal['local', 'llm', 'google']",
+        "packages/ocr_tool/src/ocr_tool/service.py imports extract_text_google and dispatches to it when mode is 'google'",
+        "run_ocr returns model_used='google-vision' (or similar constant) when mode is 'google' and no custom model is provided",
+        "Existing tests in tests/test_service.py still pass: cd packages/ocr_tool && uv run pytest tests/test_service.py -q exits 0",
+        "New test in tests/test_service.py verifies google mode dispatches to extract_text_google"
+      ],
+      "priority": 2,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add PDF support for the Google engine",
+      "description": "Extend the Google OCR engine to accept PDF files using the Vision API's batch_annotate_files with inline content. The service layer should detect PDF input by file extension and use the appropriate Vision API method. Raise a clear error if the PDF exceeds 5 pages.",
+      "acceptanceCriteria": [
+        "extract_text_google in engines/google.py accepts .pdf files and uses batch_annotate_files with InputConfig(mime_type='application/pdf', content=<bytes>)",
+        "The function raises OcrError with code PDF_TOO_LARGE when the PDF exceeds 5 pages, with a message explaining the limit",
+        "The function raises OcrError with code INVALID_FILE when the file is neither a supported image format nor a PDF",
+        "OcrRequest.image_path field description is updated to mention PDF support (or field is renamed to input_path with backwards-compatible alias)",
+        "Unit tests in tests/test_engines/test_google.py cover: successful PDF extraction (mocked), PDF page limit error, and unsupported file type error",
+        "The default output_path for a PDF input is <stem>.txt (same logic as images)"
+      ],
+      "priority": 3,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "Use PyPDF2 or just send to the API and let it fail if too large. Prefer checking page count locally with a lightweight approach if possible. The 5-page limit is for synchronous inline processing via batch_annotate_files."
+    },
+    {
+      "id": "US-004",
+      "title": "Update CLI to support google mode and PDF input",
+      "description": "Update the CLI extract command to accept 'google' as a valid mode value and to accept PDF files as input. Update the mode validation and help text accordingly.",
+      "acceptanceCriteria": [
+        "Running ocr-tool extract --image test.png --mode google routes to the google engine (verified via mocked test)",
+        "The mode validation in cli.py accepts 'local', 'llm', and 'google' (not just 'local' and 'llm')",
+        "The --image option help text mentions PDF support when using google mode",
+        "Running ocr-tool extract --image test.pdf --mode google does not fail validation (PDF is accepted)",
+        "Running ocr-tool extract --image test.pdf --mode local emits a structured JSON error with code UNSUPPORTED_FILE_TYPE indicating local mode only supports images",
+        "Existing CLI tests still pass: cd packages/ocr_tool && uv run pytest tests/test_cli.py -q exits 0",
+        "New CLI tests cover: google mode success (mocked), PDF with non-google mode error"
+      ],
+      "priority": 4,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "The PDF-with-local-mode validation can live in service.py rather than cli.py — either is acceptable as long as the error is structured."
+    },
+    {
+      "id": "US-005",
+      "title": "Full test suite passes with lint and type checks",
+      "description": "Ensure the entire ocr_tool package passes all tests, ruff lint, ruff format check, and mypy type checking. Fix any issues introduced by the new engine.",
+      "acceptanceCriteria": [
+        "cd packages/ocr_tool && uv run pytest -q exits 0 with all tests passing",
+        "cd packages/ocr_tool && uv run ruff check src/ tests/ exits 0",
+        "cd packages/ocr_tool && uv run ruff format --check src/ tests/ exits 0",
+        "cd packages/ocr_tool && uv run mypy src/ exits 0 (or exits 0 with only pre-existing google-cloud type stub warnings)",
+        "No test uses real network calls — all Google Vision API calls are mocked in tests"
+      ],
+      "priority": 5,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "google-cloud-vision has protobuf-generated types. If mypy complains about missing stubs, add google-cloud-vision stubs or use type: ignore on specific imports. This is acceptable."
+    }
+  ]
+}
