@@ -1,0 +1,29 @@
+[project]
+name = "ocr-tool"
+version = "0.1.0"
+description = "OCR CLI tool for extracting text from images"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.39.0",
+    "cli-common",
+    "easyocr>=1.7",
+    "Pillow>=10.0",
+    "pydantic>=2.0",
+    "typer>=0.9",
+]
+
+[project.scripts]
+ocr-tool = "ocr_tool.cli:app"
+
+[tool.uv.sources]
+cli-common = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ocr_tool"]
