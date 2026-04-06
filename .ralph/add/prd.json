@@ -1,11 +1,11 @@
 {
   "project": "add",
   "branchName": "ralph/add",
-  "description": "Add Google Cloud Vision API as an OCR engine with native PDF support",
+  "description": "Add Google Cloud Vision API as the default OCR engine, remove LLM engine, add PDF support, auto-fallback to local",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add Google OCR engine with API key authentication",
+      "title": "Update Google OCR engine with API key authentication",
       "description": "Update the existing engines/google.py to use GOOGLE_API_KEY env var for authentication (replacing the current ADC-only approach). The google-cloud-vision dependency is already in pyproject.toml. The engine must use document_text_detection for image files, validate input files, and return extracted text. Update existing tests for API key auth.",
       "acceptanceCriteria": [
         "google-cloud-vision is listed in packages/ocr_tool/pyproject.toml dependencies",
@@ -24,20 +24,27 @@
     },
     {
       "id": "US-002",
-      "title": "Integrate Google engine into models and service layer",
-      "description": "Expand the OcrRequest mode literal to include 'google', update the service layer to dispatch to the new engine, and wire up the model_used field correctly for the google engine.",
+      "title": "Remove LLM engine, integrate Google engine as default with local fallback",
+      "description": "Remove the LLM OCR engine entirely (engine file, tests, anthropic dependency, dispatch branch). Change the mode literal from Literal['local', 'llm'] to Literal['local', 'google']. Make 'google' the default mode. Update the service layer to dispatch to google engine and implement auto-fallback: when GOOGLE_API_KEY is not set and mode was not explicitly specified, fall back to 'local' mode. The OcrResult.mode must reflect the actual engine used (not the requested mode). The model_used field should clearly identify the OCR source.",
       "acceptanceCriteria": [
-        "OcrRequest.mode in packages/ocr_tool/src/ocr_tool/models.py accepts Literal['local', 'llm', 'google']",
-        "OcrResult.mode in packages/ocr_tool/src/ocr_tool/models.py accepts Literal['local', 'llm', 'google']",
-        "packages/ocr_tool/src/ocr_tool/service.py imports extract_text_google and dispatches to it when mode is 'google'",
-        "run_ocr returns model_used='google-vision' (or similar constant) when mode is 'google' and no custom model is provided",
-        "Existing tests in tests/test_service.py still pass: cd packages/ocr_tool && uv run pytest tests/test_service.py -q exits 0",
-        "New test in tests/test_service.py verifies google mode dispatches to extract_text_google"
+        "packages/ocr_tool/src/ocr_tool/engines/llm.py is deleted",
+        "packages/ocr_tool/tests/test_engines/test_llm.py is deleted",
+        "anthropic>=0.39.0 is removed from packages/ocr_tool/pyproject.toml dependencies",
+        "OcrRequest.mode in models.py accepts Literal['local', 'google'] with default 'google'",
+        "OcrResult.mode in models.py accepts Literal['local', 'google']",
+        "service.py imports extract_text_google and dispatches to it when mode is 'google'",
+        "When mode is 'google' and GOOGLE_API_KEY is not set and the mode was defaulted (not explicitly chosen), service.py falls back to 'local' mode silently",
+        "When mode is 'google' and GOOGLE_API_KEY is not set and the mode was explicitly chosen, service.py raises OcrError with code MISSING_CREDENTIALS",
+        "OcrResult.mode reflects the actual engine used (e.g. 'local' after fallback), not the originally requested mode",
+        "OcrResult.model_used is 'google-cloud-vision' for google mode and 'easyocr' for local mode",
+        "Existing tests referencing 'llm' mode are removed or updated",
+        "New tests in test_service.py verify: google mode dispatch, auto-fallback to local when no API key, explicit google mode fails without API key",
+        "All remaining tests pass: cd packages/ocr_tool && uv run pytest -q exits 0"
       ],
       "priority": 2,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "models.py currently has Literal['local', 'llm'] on lines 17 and 35. service.py currently dispatches with if/else on lines 27-32. Add an elif branch for 'google' mode."
+      "notes": "models.py currently has Literal['local', 'llm'] on lines 17 and 35. service.py dispatches with if/else on lines 27-32. The auto-fallback requires the service layer to know whether the user explicitly set the mode or accepted the default. One approach: add an optional 'explicit_mode' bool to OcrRequest, or have the CLI/service check GOOGLE_API_KEY availability before constructing the request. Prefer the simpler approach: have the service layer check for GOOGLE_API_KEY when mode is 'google' and fall back if not set, raising an error only if mode was explicitly requested. The CLI can pass a flag or the service can accept a parameter indicating explicit vs default mode. Also remove any llm-related integration tests in test_integration.py."
     },
     {
       "id": "US-003",
@@ -58,37 +65,42 @@
     },
     {
       "id": "US-004",
-      "title": "Update CLI to support google mode and PDF input",
-      "description": "Update the CLI extract command to accept 'google' as a valid mode value and to accept PDF files as input. Update the mode validation and help text accordingly.",
+      "title": "Update CLI for google default, local fallback, and PDF input",
+      "description": "Update the CLI extract command to use 'google' as the default mode, accept 'local' and 'google' as valid modes (no more 'llm'), accept PDF files as input, and clearly show the OCR source in the JSON output. The --mode default is 'google'. When GOOGLE_API_KEY is not available, fallback to local is handled by the service layer.",
       "acceptanceCriteria": [
-        "Running ocr-tool extract --image test.png --mode google routes to the google engine (verified via mocked test)",
-        "The mode validation in cli.py accepts 'local', 'llm', and 'google' (not just 'local' and 'llm')",
+        "Running ocr-tool extract --image test.png routes to the google engine by default (verified via mocked test)",
+        "Running ocr-tool extract --image test.png --mode local routes to the local engine",
+        "The mode validation in cli.py accepts 'local' and 'google' only (not 'llm')",
+        "Running ocr-tool extract --image test.png --mode llm emits a structured JSON error with code INVALID_MODE",
         "The --image option help text mentions PDF support when using google mode",
         "Running ocr-tool extract --image test.pdf --mode google does not fail validation (PDF is accepted)",
         "Running ocr-tool extract --image test.pdf --mode local emits a structured JSON error with code UNSUPPORTED_FILE_TYPE indicating local mode only supports images",
-        "Existing CLI tests still pass: cd packages/ocr_tool && uv run pytest tests/test_cli.py -q exits 0",
-        "New CLI tests cover: google mode success (mocked), PDF with non-google mode error"
+        "The JSON output includes mode (actual engine used) and model_used fields that clearly show the OCR source",
+        "Existing CLI tests are updated: no references to 'llm' mode remain",
+        "New CLI tests cover: default google mode (mocked), explicit local mode, PDF with local mode error, invalid mode 'llm' error"
       ],
       "priority": 4,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "cli.py line 39 currently checks `mode not in ('local', 'llm')`. Update to include 'google'. The PDF-with-local-mode validation can live in service.py rather than cli.py — either is acceptable as long as the error is structured."
+      "notes": "cli.py line 39 currently checks `mode not in ('local', 'llm')`. Update to `mode not in ('local', 'google')`. Change the default mode parameter from 'local' to 'google'. The PDF-with-local-mode validation can live in service.py rather than cli.py — either is acceptable as long as the error is structured. The CLI should pass information about whether the mode was explicitly set or defaulted, so the service layer can decide fallback behavior."
     },
     {
       "id": "US-005",
       "title": "Full test suite passes with lint and type checks",
-      "description": "Ensure the entire ocr_tool package passes all tests, ruff lint, ruff format check, and mypy type checking. Fix any issues introduced by the new engine.",
+      "description": "Ensure the entire ocr_tool package passes all tests, ruff lint, ruff format check, and mypy type checking. Fix any issues introduced by the changes. Verify that no references to the removed LLM engine remain in source or tests.",
       "acceptanceCriteria": [
         "cd packages/ocr_tool && uv run pytest -q exits 0 with all tests passing",
         "cd packages/ocr_tool && uv run ruff check src/ tests/ exits 0",
         "cd packages/ocr_tool && uv run ruff format --check src/ tests/ exits 0",
         "cd packages/ocr_tool && uv run mypy src/ exits 0 (or exits 0 with only pre-existing google-cloud type stub warnings)",
-        "No test uses real network calls — all Google Vision API calls are mocked in tests"
+        "No test uses real network calls — all Google Vision API calls are mocked in tests",
+        "No references to 'llm' mode, engines/llm.py, or anthropic remain in source or test files",
+        "uv lock completes without errors after anthropic dependency removal"
       ],
       "priority": 5,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "google-cloud-vision has protobuf-generated types. If mypy complains about missing stubs, use type: ignore on specific imports (engines/google.py already does this). This is acceptable."
+      "notes": "google-cloud-vision has protobuf-generated types. If mypy complains about missing stubs, use type: ignore on specific imports (engines/google.py already does this). This is acceptable. Also verify that removing the anthropic dependency doesn't break the lock file."
     }
   ]
 }

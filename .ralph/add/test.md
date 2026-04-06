@@ -36,6 +36,8 @@ uv run pytest tests/test_cli.py -q                     # CLI tests
 uv run pytest tests/test_models.py -q                  # Model tests
 ```
 
+**Note**: There should be NO `test_llm.py` file — the LLM engine has been removed.
+
 ## Lint and Format Check
 
 ```bash
@@ -73,6 +75,23 @@ uv lock
 
 **Pass criteria**: Exit 0, uv.lock is updated without conflicts.
 
+**Important**: After removing the `anthropic` dependency (US-002), run `uv lock` to verify the lock file updates cleanly.
+
+## LLM Engine Removal Verification
+
+After US-002 is implemented, verify the LLM engine is fully removed:
+
+```bash
+# These files should NOT exist:
+ls packages/ocr_tool/src/ocr_tool/engines/llm.py    # should fail (file not found)
+ls packages/ocr_tool/tests/test_engines/test_llm.py  # should fail (file not found)
+
+# No references to 'llm' or 'anthropic' should remain in source/tests:
+cd packages/ocr_tool
+grep -r "llm" src/ tests/ --include="*.py"       # should return nothing
+grep -r "anthropic" src/ tests/ --include="*.py"  # should return nothing
+```
+
 ## API Key Authentication Testing
 
 The Google engine uses `GOOGLE_API_KEY` for authentication. To verify auth works in tests, the test suite mocks the client creation. To verify manually:
@@ -84,7 +103,30 @@ cd packages/ocr_tool
 uv run ocr-tool extract --image test.png --mode google
 ```
 
-**Note**: The API key must belong to a GCP project with the Cloud Vision API enabled. If the API is not enabled for the key's project, the API will return a permission error.
+**Note**: The API key must belong to a GCP project with the Cloud Vision API enabled.
+
+## Default Mode and Fallback Testing
+
+The default mode is `google`. When `GOOGLE_API_KEY` is not set, the tool falls back to `local` automatically:
+
+```bash
+# With API key set — uses google engine:
+export GOOGLE_API_KEY="your-key"
+uv run ocr-tool extract --image test.png
+# Expected: JSON output with "mode": "google", "model_used": "google-cloud-vision"
+
+# Without API key — falls back to local:
+unset GOOGLE_API_KEY
+uv run ocr-tool extract --image test.png
+# Expected: JSON output with "mode": "local", "model_used": "easyocr"
+
+# Explicitly requesting google without API key — should error:
+unset GOOGLE_API_KEY
+uv run ocr-tool extract --image test.png --mode google
+# Expected: JSON error with code MISSING_CREDENTIALS
+```
+
+The `mode` and `model_used` fields in the JSON output clearly indicate which OCR source was used.
 
 ## PDF Testing
 
@@ -95,4 +137,4 @@ cd packages/ocr_tool
 uv run ocr-tool extract --image test.pdf --mode google
 ```
 
-**Note**: PDF support is only available with `--mode google`. Using `--mode local` or `--mode llm` with a PDF file should produce a structured JSON error with code `UNSUPPORTED_FILE_TYPE`. PDFs exceeding 5 pages should produce a `PDF_TOO_LARGE` error.
+**Note**: PDF support is only available with `--mode google` (or default mode with API key set). Using `--mode local` with a PDF file should produce a structured JSON error with code `UNSUPPORTED_FILE_TYPE`. PDFs exceeding 5 pages should produce a `PDF_TOO_LARGE` error.
