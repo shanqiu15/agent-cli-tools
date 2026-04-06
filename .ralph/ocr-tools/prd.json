@@ -1,0 +1,146 @@
+{
+  "project": "ocr-tools",
+  "branchName": "ralph/ocr-tools",
+  "description": "Build an OCR CLI tool with local (HuggingFace) and LLM-based extraction modes, outputting text to a file with JSON-structured CLI responses.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Bootstrap monorepo workspace and cli_common package",
+      "description": "As a developer, I need the monorepo workspace configured with a root pyproject.toml and the cli_common shared package scaffolded so that tool packages can depend on shared models and utilities.",
+      "acceptanceCriteria": [
+        "Root `pyproject.toml` exists with uv workspace config pointing to `packages/*`",
+        "`packages/cli_common/pyproject.toml` exists with dependencies: pydantic>=2.0, typer>=0.9",
+        "`packages/cli_common/src/cli_common/__init__.py` exists and is importable",
+        "`packages/cli_common/src/cli_common/models.py` defines `ToolResponse` and `ToolError` pydantic models matching the JSON envelope pattern from CODING_RULES.md",
+        "`packages/cli_common/src/cli_common/errors.py` defines a `ToolException` base exception class",
+        "`packages/cli_common/src/cli_common/io.py` defines `emit_success()` and `emit_error()` helper functions that print JSON to stdout",
+        "`uv sync` succeeds from the repo root without errors",
+        "`packages/cli_common/tests/test_models.py` exists with at least 3 tests covering ToolResponse and ToolError serialization",
+        "All tests pass: `uv run pytest packages/cli_common/tests/ -q` exits 0"
+      ],
+      "priority": 1,
+      "status": "done",
+      "attempts": 2,
+      "notes": "This is the foundation for all future packages. Keep cli_common minimal.",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Scaffold ocr_tool package with models and configuration",
+      "description": "As a developer, I need the ocr_tool package scaffolded with its pyproject.toml, pydantic models for OCR requests/responses, and the engines module structure so that engine implementations can be added independently.",
+      "acceptanceCriteria": [
+        "`packages/ocr_tool/pyproject.toml` exists with dependency on `cli_common` (as workspace dependency) and `Pillow>=10.0`",
+        "`packages/ocr_tool/src/ocr_tool/__init__.py` exists",
+        "`packages/ocr_tool/src/ocr_tool/models.py` defines pydantic models: `OcrRequest` (image_path, output_path, mode, model), `OcrResult` (text, source_image, output_path, mode, model_used)",
+        "`OcrRequest.mode` is a string literal union or enum with values `local` and `llm`",
+        "`packages/ocr_tool/src/ocr_tool/engines/__init__.py` exists",
+        "`packages/ocr_tool/src/ocr_tool/errors.py` defines `OcrError` exception subclassing `cli_common.errors.ToolException`",
+        "`uv sync` succeeds from repo root",
+        "`packages/ocr_tool/tests/test_models.py` exists with at least 3 tests covering model validation (valid input, missing required fields, invalid mode)",
+        "All tests pass: `uv run pytest packages/ocr_tool/tests/test_models.py -q` exits 0"
+      ],
+      "priority": 2,
+      "status": "done",
+      "attempts": 1,
+      "notes": "Do not implement engines or CLI yet. Models and package structure only.",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Implement local OCR engine using easyocr",
+      "description": "As a user, I want a local OCR engine that uses easyocr to extract text from images without requiring external API calls, so that I can run OCR offline.",
+      "acceptanceCriteria": [
+        "`packages/ocr_tool/src/ocr_tool/engines/local.py` defines a function `extract_text_local(image_path: Path, model: str | None = None) -> str`",
+        "The function uses `easyocr` to perform OCR and returns the extracted text as a single string",
+        "The function validates the image path exists and raises `OcrError` with code `IMAGE_NOT_FOUND` if not",
+        "The function validates the image can be opened by Pillow and raises `OcrError` with code `INVALID_IMAGE` if not",
+        "`easyocr` is listed as a dependency in `packages/ocr_tool/pyproject.toml`",
+        "`packages/ocr_tool/tests/test_engines/test_local.py` exists with at least 4 tests: file-not-found error, invalid-image error, successful extraction (mocked easyocr), and text joining logic",
+        "All tests pass: `uv run pytest packages/ocr_tool/tests/test_engines/test_local.py -q` exits 0"
+      ],
+      "priority": 3,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Mock easyocr in tests to avoid model downloads. Default language is English.",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Implement LLM-based OCR engine",
+      "description": "As a user, I want an LLM-based OCR engine that sends images to a multimodal LLM for text extraction, so that I can leverage advanced vision models for difficult images.",
+      "acceptanceCriteria": [
+        "`packages/ocr_tool/src/ocr_tool/engines/llm.py` defines a function `extract_text_llm(image_path: Path, model: str | None = None) -> str`",
+        "The function reads the image, base64-encodes it, and sends it to the Anthropic API with a prompt requesting text extraction",
+        "The function reads the API key from `ANTHROPIC_API_KEY` environment variable and raises `OcrError` with code `MISSING_API_KEY` if not set",
+        "The default model is `claude-sonnet-4-20250514` when `model` parameter is None",
+        "`anthropic` is listed as a dependency in `packages/ocr_tool/pyproject.toml`",
+        "The function validates the image path exists and the image is valid (same checks as local engine)",
+        "`packages/ocr_tool/tests/test_engines/test_llm.py` exists with at least 4 tests: missing API key error, file-not-found error, successful extraction (mocked API call), invalid-image error",
+        "All tests pass: `uv run pytest packages/ocr_tool/tests/test_engines/test_llm.py -q` exits 0"
+      ],
+      "priority": 4,
+      "status": "done",
+      "attempts": 0,
+      "notes": "All tests must mock the Anthropic API client. Never make real API calls in tests.",
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Implement OCR service orchestration layer",
+      "description": "As a developer, I need a service layer that validates inputs, selects the correct engine based on mode, runs OCR, writes the output file, and returns a structured result.",
+      "acceptanceCriteria": [
+        "`packages/ocr_tool/src/ocr_tool/service.py` defines a function `run_ocr(request: OcrRequest) -> OcrResult`",
+        "The function dispatches to `extract_text_local` when mode is `local` and `extract_text_llm` when mode is `llm`",
+        "When `output_path` is None, it defaults to `<image_stem>.txt` in the same directory as the input image",
+        "The function writes the extracted text to the output file",
+        "The function returns a fully populated `OcrResult` model",
+        "`packages/ocr_tool/tests/test_service.py` exists with at least 5 tests: local mode dispatch, llm mode dispatch, default output path generation, output file is written correctly, engine errors propagate as OcrError",
+        "All tests pass: `uv run pytest packages/ocr_tool/tests/test_service.py -q` exits 0"
+      ],
+      "priority": 5,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Mock both engines in service tests. Test file writing with tmp_path fixture.",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Implement typer CLI with extract command",
+      "description": "As a user, I want a CLI command `ocr-tool extract` that accepts image path, output path, mode, and model options, runs OCR, and outputs structured JSON to stdout.",
+      "acceptanceCriteria": [
+        "`packages/ocr_tool/src/ocr_tool/cli.py` defines a typer app with an `extract` command",
+        "The `extract` command accepts: `--image` (required, Path), `--output` (optional, Path), `--mode` (default `local`), `--model` (optional str)",
+        "On success, stdout contains JSON matching `{\"ok\": true, \"result\": {\"text\": ..., \"source_image\": ..., \"output_path\": ..., \"mode\": ..., \"model_used\": ...}}`",
+        "On error, stdout contains JSON matching `{\"ok\": false, \"error\": {\"code\": ..., \"message\": ..., \"details\": ...}}`",
+        "The CLI entry point is configured in `pyproject.toml` under `[project.scripts]` as `ocr-tool = \"ocr_tool.cli:app\"`",
+        "No decorative output, emojis, or colors are printed to stdout",
+        "`packages/ocr_tool/tests/test_cli.py` exists with at least 4 tests: help text works, missing image errors, successful extract (mocked service), invalid mode errors",
+        "All tests pass: `uv run pytest packages/ocr_tool/tests/test_cli.py -q` exits 0"
+      ],
+      "priority": 6,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Use cli_common.io helpers for JSON output. Use typer.testing.CliRunner for CLI tests.",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Add linting, type checking, and integration tests",
+      "description": "As a developer, I want the entire codebase to pass ruff, mypy, and have integration-level tests so that code quality is enforced and the end-to-end flow is verified.",
+      "acceptanceCriteria": [
+        "`uv run ruff check packages/cli_common/ packages/ocr_tool/` exits 0 with no errors",
+        "`uv run ruff format --check packages/cli_common/ packages/ocr_tool/` exits 0 (code is formatted)",
+        "`uv run mypy packages/cli_common/src/ packages/ocr_tool/src/` exits 0 with no errors",
+        "All existing unit tests still pass: `uv run pytest packages/ -q` exits 0",
+        "`ruff`, `mypy` are listed as dev dependencies in the root or relevant pyproject.toml",
+        "A `packages/ocr_tool/tests/test_integration.py` exists that tests the full CLI flow end-to-end with a real tiny test image (a 1x1 pixel PNG created in the test fixture) and mocked engines",
+        "The integration test verifies: JSON output is valid, output file is created, exit code is 0"
+      ],
+      "priority": 7,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Fix any lint/type errors found. Add py.typed marker files if needed for mypy.",
+      "passes": true
+    }
+  ]
+}
