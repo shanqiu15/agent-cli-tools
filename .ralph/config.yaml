@@ -1,0 +1,19 @@
+# ralph-harness configuration
+# See: specs/config.md for details
+
+# Planning review mode: none | local | pr
+#   none  — planner runs, immediately proceed to implementation
+#   local — pause and open plan files in $EDITOR before continuing
+#   pr    — push branch, create GitHub PR, wait for approval
+plan_review: pr
+
+# Limits
+max_iterations: 20
+max_attempts: 3
+timeout_minutes: 20
+
+# Execution
+permission_mode: auto
+
+# Plan review polling (only used when plan_review=pr)
+poll_interval: 30

@@ -208,3 +208,4 @@ __marimo__/
 
 # ralph-harness runtime state
 .ralph/*/state/
+.ralph/*/progress.md
