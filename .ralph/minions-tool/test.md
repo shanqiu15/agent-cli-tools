@@ -9,10 +9,11 @@ uv sync
 
 If a new package was added, it must be listed in the root `pyproject.toml` dev dependencies and `[tool.uv.sources]` section, then `uv sync` again.
 
-For `browser_tool`, Playwright browsers must be installed:
+For `browser_tool`, the `@playwright/cli` Node.js package must be installed:
 ```bash
-uv run playwright install chromium
+npm install -g @playwright/cli@latest
 ```
+This requires Node.js 18+. Verify installation with `playwright-cli --version`.
 
 ## Test Commands
 
@@ -27,6 +28,7 @@ Exit code 0 = pass. Any non-zero = failure.
 uv run pytest -q --all
 ```
 Requires env vars: `SERPER_API_KEY`, `CRAWL4AI_BASE_URL`, `PERPLEXITY_API_KEY`, `GOOGLE_API_KEY` as applicable.
+Requires `playwright-cli` installed globally for browser_tool external tests.
 
 ### Run tests for a single package
 ```bash
@@ -69,3 +71,10 @@ Each story's acceptance criteria reference specific commands. The evaluator shou
 5. Run `uv run mypy packages/<tool_name>/src/`
 6. Verify the CLI entrypoint works: `uv run <tool-name> --help`
 7. Check that JSON output matches the `ToolResponse` envelope format
+
+### browser_tool specific verification
+
+Since `browser_tool` wraps `@playwright/cli` via subprocess (not Playwright Python):
+- Unit tests mock `subprocess.run` and pass without Node.js or playwright-cli installed
+- External tests (`--all`) require `playwright-cli` in PATH
+- Verify the CLI detects missing `playwright-cli` gracefully: unset PATH to playwright-cli and run `uv run browser-tool navigate --url https://example.com` — should emit `PLAYWRIGHT_CLI_NOT_FOUND` error
