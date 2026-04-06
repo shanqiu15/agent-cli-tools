@@ -64,7 +64,7 @@ uv run mypy src/
 
 ## Dependency Resolution
 
-After adding `google-cloud-vision` to pyproject.toml:
+After adding or updating dependencies in pyproject.toml:
 
 ```bash
 cd /Users/haochen/workspace/agent-cli-tools
@@ -90,3 +90,14 @@ uv run ocr-tool extract --image test.png --mode google
 ```
 
 **Note**: The API key must belong to a GCP project with the Cloud Vision API enabled. If the API is not enabled for the key's project, the API will return a permission error.
+
+## PDF Testing
+
+To test PDF support manually (after US-003 is implemented):
+
+```bash
+cd packages/ocr_tool
+uv run ocr-tool extract --image test.pdf --mode google
+```
+
+**Note**: PDF support is only available with `--mode google`. Using `--mode local` or `--mode llm` with a PDF file should produce a structured JSON error with code `UNSUPPORTED_FILE_TYPE`. PDFs exceeding 5 pages should produce a `PDF_TOO_LARGE` error.

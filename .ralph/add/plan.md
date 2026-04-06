@@ -16,6 +16,11 @@ Replace the low-quality local OCR (easyocr) and expensive LLM-based OCR with Goo
 
 5. **Keep existing engines intact**: local and llm modes remain unchanged. Google is additive.
 
+## Implementation Notes
+
+- `google-cloud-vision>=3.7` is already in `packages/ocr_tool/pyproject.toml` and `engines/google.py` already exists with a basic ADC-only implementation. US-001 must update this file to add API key auth support and tests.
+- The existing `engines/google.py` creates `ImageAnnotatorClient()` without client options. US-001 must refactor client creation to check API key env vars first.
+
 ## Constraints
 
 - Do NOT remove or modify the existing `local` or `llm` engines — they stay as-is.
@@ -26,7 +31,7 @@ Replace the low-quality local OCR (easyocr) and expensive LLM-based OCR with Goo
 
 ## Dependencies (story ordering)
 
-- US-001 (dependency + engine skeleton) must come first — everything else builds on it.
+- US-001 (engine with API key auth + tests) must come first — everything else builds on it.
 - US-002 (model/service integration) depends on US-001.
 - US-003 (PDF support) depends on US-002.
 - US-004 (CLI update) depends on US-002.
@@ -44,6 +49,7 @@ Replace the low-quality local OCR (easyocr) and expensive LLM-based OCR with Goo
 
 ## Changes
 
-- **Authentication strategy revised** (reviewer feedback): The original plan required `GOOGLE_APPLICATION_CREDENTIALS` or ADC. The reviewer has existing API keys (`GOOGLE_API_KEY`, `GOOGLE_PLACES_API_KEY`, `GEMINI_API_KEY`) and wants to reuse them. The plan now checks for these API keys first (in priority order) and creates the client with `client_options={"api_key": key}`. ADC remains as a fallback. This is simpler for users who already have Google API keys configured.
+- **Authentication strategy revised** (reviewer feedback round 1): The original plan required `GOOGLE_APPLICATION_CREDENTIALS` or ADC. The reviewer has existing API keys (`GOOGLE_API_KEY`, `GOOGLE_PLACES_API_KEY`, `GEMINI_API_KEY`) and wants to reuse them. The plan now checks for these API keys first (in priority order) and creates the client with `client_options={"api_key": key}`. ADC remains as a fallback. This is simpler for users who already have Google API keys configured.
 - **US-001 acceptance criteria updated** to reflect API key auth support and the env var lookup order.
 - **Risk #3 updated** from "credential setup friction" to "API key compatibility" since the main auth path is now API keys.
+- **Re-review refinements** (round 2): Added implementation notes section clarifying that `google-cloud-vision` dep and a basic `engines/google.py` already exist from a partial US-001 implementation — US-001 must update (not create from scratch) the engine to add API key auth. Updated US-003 notes to recommend `pypdf` instead of deprecated `PyPDF2`.

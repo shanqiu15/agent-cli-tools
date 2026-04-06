@@ -5,11 +5,11 @@
   "userStories": [
     {
       "id": "US-001",
-      "title": "Add google-cloud-vision dependency and create Google OCR engine for images",
-      "description": "Add the google-cloud-vision Python SDK as a dependency and implement a new engine module at engines/google.py that performs text detection on image files using the Vision API. The engine should support API key authentication (checking GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY in order) and fall back to Application Default Credentials. It should validate the input file and return extracted text.",
+      "title": "Add Google OCR engine with API key authentication",
+      "description": "Update the existing engines/google.py to support API key authentication (checking GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY in order) with ADC fallback. The google-cloud-vision dependency is already in pyproject.toml. The engine must use document_text_detection for image files, validate input files, and return extracted text. Add comprehensive unit tests.",
       "acceptanceCriteria": [
         "google-cloud-vision is listed in packages/ocr_tool/pyproject.toml dependencies",
-        "uv lock completes without errors after adding the dependency",
+        "uv lock completes without errors after any dependency changes",
         "File packages/ocr_tool/src/ocr_tool/engines/google.py exists and defines a function extract_text_google(file_path: Path, model: str | None = None) -> str",
         "The function checks for API keys in this order: GOOGLE_API_KEY, GOOGLE_PLACES_API_KEY, GEMINI_API_KEY. If found, it creates ImageAnnotatorClient with client_options={'api_key': key}",
         "If no API key is found, the function falls back to GOOGLE_APPLICATION_CREDENTIALS or google.auth.default()",
@@ -21,7 +21,7 @@
       "priority": 1,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "Use document_text_detection (not text_detection) as it provides better structured results. For API key auth, pass client_options={'api_key': key} to ImageAnnotatorClient(). The env var lookup order is: GOOGLE_API_KEY > GOOGLE_PLACES_API_KEY > GEMINI_API_KEY > ADC. This allows reusing existing Google API keys without needing a service account."
+      "notes": "A basic engines/google.py already exists (ADC-only, no API key support). Update it to add API key auth per the acceptance criteria. Use document_text_detection (not text_detection) as it provides better structured results. For API key auth, pass client_options={'api_key': key} to ImageAnnotatorClient(). The env var lookup order is: GOOGLE_API_KEY > GOOGLE_PLACES_API_KEY > GEMINI_API_KEY > ADC. This allows reusing existing Google API keys without needing a service account."
     },
     {
       "id": "US-002",
@@ -55,7 +55,7 @@
       "priority": 3,
       "status": "not_implemented",
       "attempts": 0,
-      "notes": "Use PyPDF2 or just send to the API and let it fail if too large. Prefer checking page count locally with a lightweight approach if possible. The 5-page limit is for synchronous inline processing via batch_annotate_files."
+      "notes": "Use pypdf (not deprecated PyPDF2) if checking page count locally, or just send to the API and let it fail if too large. Prefer checking page count locally with a lightweight approach if possible. The 5-page limit is for synchronous inline processing via batch_annotate_files."
     },
     {
       "id": "US-004",
