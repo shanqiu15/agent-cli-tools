@@ -1,0 +1,31 @@
+[project]
+name = "agent-cli-tools"
+version = "0.1.0"
+description = "Composable Python CLI tools for LLM agents"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10",
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "cli-common",
+    "ocr-tool",
+]
+
+[tool.uv.sources]
+cli-common = { workspace = true }
+ocr-tool = { workspace = true }
+
+[tool.pytest.ini_options]
+markers = [
+    "external: tests requiring external services (skipped without --all)",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    "torch<=2.2.2",
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
