@@ -214,3 +214,6 @@ __marimo__/
 
 # ralph-harness runtime state
 .ralph/
+
+# ralph-harness runtime state
+.ralph/*/state/

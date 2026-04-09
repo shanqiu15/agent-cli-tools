@@ -58,6 +58,15 @@ Rules:
 - shared generic code belongs in `cli_common`
 - do not create giant “misc utils” modules
 
+### 2.5 Every tool must be standalone
+Each tool must be independently runnable without depending on custom or proprietary infrastructure.
+
+Rules:
+- a tool may depend on a public API (e.g., Google Cloud Vision, Perplexity, Serper)
+- a tool may depend on a locally hosted container or installable binary (e.g., playwright-cli, crawl4ai)
+- a tool must NOT assume the existence of a custom backend, internal gateway, or proprietary service that is not publicly available
+- if the tool cannot function without infrastructure that a new user cannot set up on their own, it does not belong in this repository
+
 ---
 
 ## 3. Repository Standards
