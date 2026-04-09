@@ -1,0 +1,143 @@
+{
+  "project": "add_more_tools",
+  "branchName": "ralph/add_more_tools",
+  "description": "Implement six new CLI tool packages (file_tool, todo_tool, vision_tool, transcription_tool, tts_tool, skill_tool) following established monorepo conventions.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement file_tool package with read, write, patch, search, list, and tree subcommands",
+      "description": "As an LLM agent, I need a file_tool CLI that provides safe filesystem operations (read, write, patch, search, list, tree) with security guards against device paths, sensitive paths, and binary files, so I can reliably manipulate files in a sandboxed manner.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/file_tool/` with standard layout: `pyproject.toml`, `src/file_tool/{__init__.py, cli.py, models.py, service.py, errors.py}`, `tests/{__init__.py, test_cli.py, test_service.py}`",
+        "`file-tool --help` exits 0 and lists subcommands: read, write, patch, search, list, tree",
+        "`file-tool read --file <path>` returns JSON with `ok: true` and file contents, respecting `--offset` and `--limit` (1-indexed lines), capped at 100K chars",
+        "`file-tool write --file <path> --content <text>` writes the file and returns JSON with `ok: true`; attempting to write to a sensitive path (e.g. `~/.ssh/id_rsa`, `/etc/shadow`) returns `ok: false` with code `PERMISSION_DENIED`",
+        "`file-tool patch --file <path> --old <text> --new <text>` performs find-and-replace; returns error if old_string is not found or is not unique (unless `--replace-all` is passed)",
+        "`file-tool search --pattern <regex> --path <dir>` returns JSON array of matches with file, line number, and content; supports `--glob`, `--context-lines`, `--offset`, `--limit`",
+        "`file-tool list --path <dir>` and `file-tool tree --path <dir>` return directory contents with `--depth` control",
+        "Reading `/dev/zero`, `/dev/urandom`, or any path under `/dev/` returns `ok: false` with code `BLOCKED_PATH`",
+        "Reading a file with a binary extension (e.g. `.png`, `.exe`) returns `ok: false` with code `BINARY_FILE`",
+        "`FileError` subclass of `ToolException` is defined in `errors.py` with structured error codes",
+        "`ruff check packages/file_tool` and `mypy packages/file_tool/src` exit 0",
+        "`pytest packages/file_tool/tests -q` passes with at least 15 tests covering: read success, read with offset/limit, write success, write to sensitive path blocked, patch success, patch non-unique match error, search with matches, search with no matches, list directory, tree directory, blocked device path, binary file detection, CLI help text, CLI error propagation"
+      ],
+      "priority": 1,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Foundational tool. No external dependencies. Focus on safety guards (device paths, sensitive paths, binary detection, path traversal prevention via os.path.realpath).",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Implement todo_tool package with list, write, and clear subcommands",
+      "description": "As an LLM agent, I need a todo_tool CLI that persists a structured task list to disk with support for reading, writing (replace or merge mode), and clearing todos, so I can track progress across invocations.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/todo_tool/` with standard layout: `pyproject.toml`, `src/todo_tool/{__init__.py, cli.py, models.py, service.py, errors.py}`, `tests/{__init__.py, test_cli.py, test_service.py}`",
+        "`todo-tool --help` exits 0 and lists subcommands: list, write, clear",
+        "`todo-tool write --items '<json_array>'` accepts a JSON array of `{id, content, status}` objects and persists them; returns JSON with `ok: true` and the full list plus summary counts `{total, pending, in_progress, completed, cancelled}`",
+        "`todo-tool write --items '<json_array>' --merge` updates existing items by id and appends new ones, preserving order of existing items",
+        "`todo-tool list` returns the current todo list as JSON; returns empty array if no todos exist",
+        "`todo-tool clear` removes all items and returns `ok: true`",
+        "Valid statuses are: pending, in_progress, completed, cancelled; an invalid status in input defaults to pending",
+        "Data is persisted to a JSON file; `--data-dir` option overrides the default location for testing",
+        "Persistence works across separate process invocations (write in one process, list in another)",
+        "`ruff check packages/todo_tool` and `mypy packages/todo_tool/src` exit 0",
+        "`pytest packages/todo_tool/tests -q` passes with at least 10 tests covering: write and list round-trip, merge mode, status validation, clear, persistence across invocations, empty list, CLI help, CLI error handling"
+      ],
+      "priority": 2,
+      "status": "done",
+      "attempts": 0,
+      "notes": "Simple CRUD tool. Good for validating the package template. Uses tmp_path fixture for test isolation.",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Implement vision_tool package with analyze subcommand and multi-provider support",
+      "description": "As an LLM agent, I need a vision_tool CLI that analyzes images using a configurable vision LLM provider (Google Gemini Flash or OpenAI GPT-4o-mini), accepting either a local file or URL, so I can extract information from visual content.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/vision_tool/` with standard layout plus `src/vision_tool/engines/{__init__.py, gemini.py, openai.py}`",
+        "`vision-tool --help` exits 0 and lists the `analyze` subcommand",
+        "`vision-tool analyze --image <path_or_url> --prompt <question>` returns JSON with `ok: true` and `{analysis, provider, model}` fields",
+        "Provider selection uses `cli_common.config.load_config()` cascade: tool_config.yaml `vision.provider` > `VISION_PROVIDER` env var > default `gemini`",
+        "Gemini engine (`engines/gemini.py`) calls the Google Generative AI API; requires `GOOGLE_API_KEY` or config file key; raises `MISSING_CREDENTIALS` if absent",
+        "OpenAI engine (`engines/openai.py`) calls the OpenAI chat completions API with vision; requires `OPENAI_API_KEY` or config file key; raises `MISSING_CREDENTIALS` if absent",
+        "URL images are downloaded with httpx, with SSRF protection (block private/loopback/link-local IPs) and a 10MB size limit",
+        "MIME type is detected via magic bytes (supports PNG, JPEG, GIF, WebP at minimum); unsupported formats return `INVALID_INPUT` error",
+        "Local file path that doesn't exist returns `ok: false` with code `FILE_NOT_FOUND`",
+        "`ruff check packages/vision_tool` and `mypy packages/vision_tool/src` exit 0",
+        "`pytest packages/vision_tool/tests -q` passes with at least 10 tests covering: local file analysis (mocked API), URL download (mocked httpx), SSRF blocked URL, missing credentials, invalid MIME type, file not found, CLI help, provider fallback logic"
+      ],
+      "priority": 3,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "First multi-provider tool. Follow the ocr_tool engines/ pattern. SSRF protection is critical -- block RFC 1918, loopback, link-local ranges. Unit tests should mock all API calls; integration tests (marked @pytest.mark.external) can hit real APIs."
+    },
+    {
+      "id": "US-004",
+      "title": "Implement transcription_tool package with transcribe subcommand and multi-provider support",
+      "description": "As an LLM agent, I need a transcription_tool CLI that transcribes audio files using a configurable speech-to-text provider (Groq Whisper or OpenAI Whisper), so I can convert audio content to text.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/transcription_tool/` with standard layout plus `src/transcription_tool/engines/{__init__.py, groq.py, openai.py}`",
+        "`transcription-tool --help` exits 0 and lists the `transcribe` subcommand",
+        "`transcription-tool transcribe --file <audio_path>` returns JSON with `ok: true` and `{transcript, provider, model}` fields",
+        "Provider selection uses `cli_common.config.load_config()` cascade: tool_config.yaml `transcription.provider` > `TRANSCRIPTION_PROVIDER` env var > default `groq`",
+        "Groq engine calls the Groq Whisper API (OpenAI-compatible endpoint at `https://api.groq.com/openai/v1`) using the `openai` SDK with custom base_url; requires `GROQ_API_KEY`",
+        "OpenAI engine calls the OpenAI Whisper API (`whisper-1` model); requires `OPENAI_API_KEY`",
+        "Audio file validation: must exist, must be a file (not directory), extension must be in {mp3, wav, ogg, m4a, webm, flac}, size must be under 25MB",
+        "Invalid file returns structured error: `FILE_NOT_FOUND`, `INVALID_INPUT` (bad format), or `FILE_TOO_LARGE`",
+        "`ruff check packages/transcription_tool` and `mypy packages/transcription_tool/src` exit 0",
+        "`pytest packages/transcription_tool/tests -q` passes with at least 10 tests covering: successful transcription (mocked API), file validation (missing file, wrong format, oversized), missing credentials, CLI help, provider selection logic, response parsing"
+      ],
+      "priority": 4,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "Both providers use the OpenAI SDK (one with custom base_url). The openai package is the only external SDK dependency. Mock the SDK client in unit tests."
+    },
+    {
+      "id": "US-005",
+      "title": "Implement tts_tool package with speak subcommand and multi-provider support",
+      "description": "As an LLM agent, I need a tts_tool CLI that converts text to speech using a configurable provider (Edge TTS for free or OpenAI TTS for paid), outputting an audio file, so I can generate spoken audio from text.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/tts_tool/` with standard layout plus `src/tts_tool/engines/{__init__.py, edge.py, openai.py}`",
+        "`tts-tool --help` exits 0 and lists the `speak` subcommand",
+        "`tts-tool speak --text <string> --output <path>` generates an audio file and returns JSON with `ok: true` and `{file_path, provider, voice}` fields",
+        "Provider selection uses `cli_common.config.load_config()` cascade: tool_config.yaml `tts.provider` > `TTS_PROVIDER` env var > default `edge`",
+        "Edge engine uses the `edge-tts` package (async, no API key needed); default voice `en-US-AriaNeural`; generates MP3",
+        "OpenAI engine uses the `openai` SDK `client.audio.speech.create()`; default voice `alloy`, model `tts-1`; requires `OPENAI_API_KEY`",
+        "Text validation: must not be empty, must not exceed 4000 characters; violations return `INVALID_INPUT`",
+        "Voice can be overridden via `--voice` option or config cascade (`tts.voice`)",
+        "If `--output` is not specified, the tool generates a file in a temp directory and returns the path",
+        "`ruff check packages/tts_tool` and `mypy packages/tts_tool/src` exit 0",
+        "`pytest packages/tts_tool/tests -q` passes with at least 10 tests covering: text validation (empty, too long), Edge TTS generation (mocked), OpenAI TTS generation (mocked), voice override, default output path, CLI help, missing credentials for OpenAI, provider selection logic"
+      ],
+      "priority": 5,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "Edge TTS is async (uses asyncio.run in the sync service wrapper). The edge-tts package is the only non-standard dependency. OpenAI TTS streams response to file."
+    },
+    {
+      "id": "US-006",
+      "title": "Implement skill_tool package with list, view, create, edit, and delete subcommands",
+      "description": "As an LLM agent, I need a skill_tool CLI that manages reusable skill definitions (SKILL.md files with YAML frontmatter) with full CRUD operations and supporting file management, so I can create, discover, and maintain a library of agent skills.",
+      "acceptanceCriteria": [
+        "Package exists at `packages/skill_tool/` with standard layout: `pyproject.toml`, `src/skill_tool/{__init__.py, cli.py, models.py, service.py, errors.py}`, `tests/{__init__.py, test_cli.py, test_service.py}`",
+        "`skill-tool --help` exits 0 and lists subcommands: list, view, create, edit, delete",
+        "`skill-tool create --name <name>` reads SKILL.md content from stdin, validates YAML frontmatter (requires `name` and `description` fields), creates `<skills_dir>/<name>/SKILL.md`, and returns JSON with `ok: true`",
+        "`skill-tool list` returns JSON array of skill metadata (name, description, category) without loading full SKILL.md content",
+        "`skill-tool view --name <name>` returns the full SKILL.md content for the named skill; supports `--file <subpath>` to view supporting files",
+        "`skill-tool edit --name <name>` reads new content from stdin and replaces the existing SKILL.md; validates frontmatter before writing",
+        "`skill-tool delete --name <name> --force` removes the skill directory; without `--force`, returns a confirmation-needed error",
+        "Name validation: lowercase alphanumeric plus hyphens, dots, underscores; max 64 characters; invalid names return `INVALID_INPUT`",
+        "YAML frontmatter validation: missing `name` or `description` returns `INVALID_INPUT`; malformed YAML returns `INVALID_INPUT`",
+        "Supporting files: `skill-tool create --name <name> --write-file <subdir>/<filename>` writes a file to an allowed subdirectory (references, templates, scripts, assets); other subdirectories return `INVALID_INPUT`",
+        "Skills directory defaults to `~/.local/share/agent-cli-tools/skills/`; overridable via `--skills-dir` option",
+        "`ruff check packages/skill_tool` and `mypy packages/skill_tool/src` exit 0",
+        "`pytest packages/skill_tool/tests -q` passes with at least 15 tests covering: full CRUD lifecycle (create/list/view/edit/delete), frontmatter validation (missing name, missing description, malformed YAML), name validation (special chars, too long), supporting file write and view, list with multiple skills, delete without --force, CLI help"
+      ],
+      "priority": 6,
+      "status": "not_implemented",
+      "attempts": 0,
+      "notes": "Most complex tool. Uses pyyaml for frontmatter parsing. Atomic writes via tempfile+rename for crash safety. The --skills-dir option and tmp_path fixture are critical for test isolation."
+    }
+  ]
+}
