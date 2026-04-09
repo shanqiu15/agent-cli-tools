@@ -18,7 +18,6 @@ dev = [
     "browser-tool",
     "sonar-tool",
     "image-gen-tool",
-    "cron-tool",
 ]
 
 [tool.uv.sources]
@@ -31,7 +30,6 @@ memory-tool = { workspace = true }
 browser-tool = { workspace = true }
 sonar-tool = { workspace = true }
 image-gen-tool = { workspace = true }
-cron-tool = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
