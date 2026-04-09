@@ -23,6 +23,7 @@ dev = [
     "file-tool",
     "todo-tool",
     "vision-tool",
+    "transcription-tool",
 ]
 
 [tool.uv.sources]
@@ -39,6 +40,7 @@ cron-tool = { workspace = true }
 file-tool = { workspace = true }
 todo-tool = { workspace = true }
 vision-tool = { workspace = true }
+transcription-tool = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
