@@ -22,6 +22,7 @@ dev = [
     "cron-tool",
     "file-tool",
     "todo-tool",
+    "vision-tool",
 ]
 
 [tool.uv.sources]
@@ -37,6 +38,7 @@ image-gen-tool = { workspace = true }
 cron-tool = { workspace = true }
 file-tool = { workspace = true }
 todo-tool = { workspace = true }
+vision-tool = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"

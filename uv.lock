@@ -26,6 +26,7 @@ members = [
     "ocr-tool",
     "sonar-tool",
     "todo-tool",
+    "vision-tool",
     "web-crawl-tool",
     "web-search-tool",
 ]
@@ -52,6 +53,7 @@ dev = [
     { name = "sonar-tool" },
     { name = "todo-tool" },
     { name = "types-pyyaml" },
+    { name = "vision-tool" },
     { name = "web-crawl-tool" },
     { name = "web-search-tool" },
 ]
@@ -74,6 +76,7 @@ dev = [
     { name = "sonar-tool", editable = "packages/sonar_tool" },
     { name = "todo-tool", editable = "packages/todo_tool" },
     { name = "types-pyyaml", specifier = ">=6.0" },
+    { name = "vision-tool", editable = "packages/vision_tool" },
     { name = "web-crawl-tool", editable = "packages/web_crawl_tool" },
     { name = "web-search-tool", editable = "packages/web_search_tool" },
 ]
@@ -2078,6 +2081,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
+]
+
+[[package]]
+name = "vision-tool"
+version = "0.1.0"
+source = { editable = "packages/vision_tool" }
+dependencies = [
+    { name = "cli-common" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cli-common", editable = "packages/cli_common" },
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "typer", specifier = ">=0.9" },
 ]
 
 [[package]]
