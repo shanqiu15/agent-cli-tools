@@ -115,42 +115,6 @@ All commands accept `--session NAME` (default: `default`) to manage multiple bro
 
 ---
 
-### cron-tool
-
-Schedule jobs via an HTTP gateway API.
-
-```bash
-# Create a cron job
-cron-tool create --name "daily-report" --schedule "0 9 * * *" --command "generate-report"
-
-# Create an interval job
-cron-tool create --name "health-check" --schedule "every 5m" --command "ping-service"
-
-# Create a one-shot job
-cron-tool create --name "deploy" --schedule "2026-04-10T14:00:00Z" --command "deploy-prod"
-
-# List and delete
-cron-tool list
-cron-tool delete --job-id "abc123"
-```
-
-| Command | Options | Description |
-|---------|---------|-------------|
-| `create` | `--name`, `--schedule`, `--command`, `--timezone` (default: UTC) | Create a scheduled job |
-| `list` | | List all jobs |
-| `delete` | `--job-id` | Delete a job by ID |
-
-**Schedule formats:** cron expressions (`0 9 * * *`), intervals (`every 5m`, `every 1h`), or ISO 8601 timestamps.
-
-**Environment variables:**
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `CRON_GATEWAY_URL` | Yes | Base URL of the gateway API |
-
-**Error codes:** `MISSING_CREDENTIALS`, `INVALID_INPUT`
-
----
-
 ### image-gen-tool
 
 Generate images using the Google Gemini Imagen API.
@@ -332,7 +296,6 @@ web-search-tool search --query "best CLI frameworks" --num-results 3
 | `GOOGLE_API_KEY` | image-gen-tool | Google Gemini API key |
 | `PERPLEXITY_API_KEY` | sonar-tool | Perplexity API key |
 | `SERPER_API_KEY` | web-search-tool | Serper API key |
-| `CRON_GATEWAY_URL` | cron-tool | Gateway API base URL |
 | `CRAWL4AI_BASE_URL` | web-crawl-tool | Optional crawl4ai service URL |
 
 ## Development
