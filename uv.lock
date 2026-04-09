@@ -20,10 +20,12 @@ members = [
     "browser-tool",
     "cli-common",
     "cron-tool",
+    "file-tool",
     "image-gen-tool",
     "memory-tool",
     "ocr-tool",
     "sonar-tool",
+    "todo-tool",
     "web-crawl-tool",
     "web-search-tool",
 ]
@@ -40,6 +42,7 @@ dev = [
     { name = "browser-tool" },
     { name = "cli-common" },
     { name = "cron-tool" },
+    { name = "file-tool" },
     { name = "image-gen-tool" },
     { name = "memory-tool" },
     { name = "mypy" },
@@ -47,6 +50,7 @@ dev = [
     { name = "pytest" },
     { name = "ruff" },
     { name = "sonar-tool" },
+    { name = "todo-tool" },
     { name = "types-pyyaml" },
     { name = "web-crawl-tool" },
     { name = "web-search-tool" },
@@ -60,6 +64,7 @@ dev = [
     { name = "browser-tool", editable = "packages/browser_tool" },
     { name = "cli-common", editable = "packages/cli_common" },
     { name = "cron-tool", editable = "packages/cron_tool" },
+    { name = "file-tool", editable = "packages/file_tool" },
     { name = "image-gen-tool", editable = "packages/image_gen_tool" },
     { name = "memory-tool", editable = "packages/memory_tool" },
     { name = "mypy", specifier = ">=1.10" },
@@ -67,6 +72,7 @@ dev = [
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.4" },
     { name = "sonar-tool", editable = "packages/sonar_tool" },
+    { name = "todo-tool", editable = "packages/todo_tool" },
     { name = "types-pyyaml", specifier = ">=6.0" },
     { name = "web-crawl-tool", editable = "packages/web_crawl_tool" },
     { name = "web-search-tool", editable = "packages/web_search_tool" },
@@ -453,6 +459,23 @@ dependencies = [
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/84/4a2cab0e6adde6a85e7ba543862e5fc0250c51f3ac721a078a55cdcff250/easyocr-1.7.2-py3-none-any.whl", hash = "sha256:5be12f9b0e595d443c9c3d10b0542074b50f0ec2d98b141a109cd961fd1c177c", size = 2870178, upload-time = "2024-09-24T11:34:43.554Z" },
+]
+
+[[package]]
+name = "file-tool"
+version = "0.1.0"
+source = { editable = "packages/file_tool" }
+dependencies = [
+    { name = "cli-common" },
+    { name = "pydantic" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cli-common", editable = "packages/cli_common" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "typer", specifier = ">=0.9" },
 ]
 
 [[package]]
@@ -1936,6 +1959,23 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c5/cb/2f6d79c7576e22c116352a801f4c3c8ace5957e9aced862012430b62e14f/tifffile-2026.3.3.tar.gz", hash = "sha256:d9a1266bed6f2ee1dd0abde2018a38b4f8b2935cb843df381d70ac4eac5458b7", size = 388745, upload-time = "2026-03-03T19:14:38.134Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1a/e4/e804505f87627cd8cdae9c010c47c4485fd8c1ce31a7dd0ab7fcc4707377/tifffile-2026.3.3-py3-none-any.whl", hash = "sha256:e8be15c94273113d31ecb7aa3a39822189dd11c4967e3cc88c178f1ad2fd1170", size = 243960, upload-time = "2026-03-03T19:14:35.808Z" },
+]
+
+[[package]]
+name = "todo-tool"
+version = "0.1.0"
+source = { editable = "packages/todo_tool" }
+dependencies = [
+    { name = "cli-common" },
+    { name = "pydantic" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cli-common", editable = "packages/cli_common" },
+    { name = "pydantic", specifier = ">=2.0" },
+    { name = "typer", specifier = ">=0.9" },
 ]
 
 [[package]]
