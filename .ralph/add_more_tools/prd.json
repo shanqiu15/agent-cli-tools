@@ -68,9 +68,10 @@
         "`pytest packages/vision_tool/tests -q` passes with at least 10 tests covering: local file analysis (mocked API), URL download (mocked httpx), SSRF blocked URL, missing credentials, invalid MIME type, file not found, CLI help, provider fallback logic"
       ],
       "priority": 3,
-      "status": "not_implemented",
+      "status": "done",
       "attempts": 0,
-      "notes": "First multi-provider tool. Follow the ocr_tool engines/ pattern. SSRF protection is critical -- block RFC 1918, loopback, link-local ranges. Unit tests should mock all API calls; integration tests (marked @pytest.mark.external) can hit real APIs."
+      "notes": "First multi-provider tool. Follow the ocr_tool engines/ pattern. SSRF protection is critical -- block RFC 1918, loopback, link-local ranges. Unit tests should mock all API calls; integration tests (marked @pytest.mark.external) can hit real APIs.",
+      "passes": true
     },
     {
       "id": "US-004",
