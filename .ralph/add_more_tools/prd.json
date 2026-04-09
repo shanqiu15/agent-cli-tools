@@ -90,9 +90,10 @@
         "`pytest packages/transcription_tool/tests -q` passes with at least 10 tests covering: successful transcription (mocked API), file validation (missing file, wrong format, oversized), missing credentials, CLI help, provider selection logic, response parsing"
       ],
       "priority": 4,
-      "status": "not_implemented",
+      "status": "done",
       "attempts": 0,
-      "notes": "Both providers use the OpenAI SDK (one with custom base_url). The openai package is the only external SDK dependency. Mock the SDK client in unit tests."
+      "notes": "Both providers use the OpenAI SDK (one with custom base_url). The openai package is the only external SDK dependency. Mock the SDK client in unit tests.",
+      "passes": true
     },
     {
       "id": "US-005",
