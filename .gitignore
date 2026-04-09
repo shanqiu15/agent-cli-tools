@@ -48,7 +48,7 @@ coverage.xml
 *.cover
 *.py.cover
 .hypothesis/
-.pytest_cache/
+# .pytest_cache/ — moved to build/
 cover/
 
 # Translations
@@ -154,8 +154,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
+# mypy — moved to build/
+# .mypy_cache/
 .dmypy.json
 dmypy.json
 
@@ -188,8 +188,8 @@ cython_debug/
 #  you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 
-# Ruff stuff:
-.ruff_cache/
+# Ruff stuff — moved to build/
+# .ruff_cache/
 
 # PyPI configuration file
 .pypirc
@@ -206,6 +206,11 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# playwright-cli runtime state
+.playwright-cli/
+
+# macOS
+.DS_Store
+
 # ralph-harness runtime state
-.ralph/*/state/
-.ralph/*/progress.md
+.ralph/

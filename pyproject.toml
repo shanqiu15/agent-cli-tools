@@ -11,16 +11,40 @@ dev = [
     "ruff>=0.4",
     "cli-common",
     "ocr-tool",
+    "web-search-tool",
+    "web-crawl-tool",
+    "bash-tool",
+    "memory-tool",
+    "browser-tool",
+    "sonar-tool",
+    "image-gen-tool",
+    "cron-tool",
 ]
 
 [tool.uv.sources]
 cli-common = { workspace = true }
 ocr-tool = { workspace = true }
+web-search-tool = { workspace = true }
+web-crawl-tool = { workspace = true }
+bash-tool = { workspace = true }
+memory-tool = { workspace = true }
+browser-tool = { workspace = true }
+sonar-tool = { workspace = true }
+image-gen-tool = { workspace = true }
+cron-tool = { workspace = true }
 
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+cache_dir = "build/.pytest_cache"
 markers = [
     "external: tests requiring external services (skipped without --all)",
 ]
+
+[tool.ruff]
+cache-dir = "build/.ruff_cache"
+
+[tool.mypy]
+cache_dir = "build/.mypy_cache"
 
 [tool.uv]
 constraint-dependencies = [

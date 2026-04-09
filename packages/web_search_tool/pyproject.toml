@@ -1,20 +1,17 @@
 [project]
-name = "ocr-tool"
+name = "web-search-tool"
 version = "0.1.0"
-description = "OCR CLI tool for extracting text from images"
+description = "Web search CLI tool using the Serper API"
 requires-python = ">=3.12"
 dependencies = [
     "cli-common",
-    "easyocr>=1.7",
-    "google-cloud-vision>=3.7",
-    "numpy<2",
-    "Pillow>=10.0",
+    "httpx>=0.27",
     "pydantic>=2.0",
     "typer>=0.9",
 ]
 
 [project.scripts]
-ocr-tool = "ocr_tool.cli:app"
+web-search-tool = "web_search_tool.cli:app"
 
 [tool.uv.sources]
 cli-common = { workspace = true }
@@ -32,4 +29,4 @@ module = "cli_common.*"
 ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ocr_tool"]
+packages = ["src/web_search_tool"]

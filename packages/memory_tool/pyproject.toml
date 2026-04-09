@@ -1,20 +1,16 @@
 [project]
-name = "ocr-tool"
+name = "memory-tool"
 version = "0.1.0"
-description = "OCR CLI tool for extracting text from images"
+description = "File-based memory system CLI tool for LLM agents"
 requires-python = ">=3.12"
 dependencies = [
     "cli-common",
-    "easyocr>=1.7",
-    "google-cloud-vision>=3.7",
-    "numpy<2",
-    "Pillow>=10.0",
     "pydantic>=2.0",
     "typer>=0.9",
 ]
 
 [project.scripts]
-ocr-tool = "ocr_tool.cli:app"
+memory-tool = "memory_tool.cli:app"
 
 [tool.uv.sources]
 cli-common = { workspace = true }
@@ -32,4 +28,4 @@ module = "cli_common.*"
 ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ocr_tool"]
+packages = ["src/memory_tool"]
