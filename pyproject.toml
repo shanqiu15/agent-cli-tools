@@ -9,6 +9,7 @@ dev = [
     "mypy>=1.10",
     "pytest>=8.0",
     "ruff>=0.4",
+    "types-pyyaml>=6.0",
     "cli-common",
     "ocr-tool",
     "web-search-tool",
