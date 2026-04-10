@@ -138,9 +138,10 @@
         "`pytest packages/skill_tool/tests -q` passes with at least 15 tests covering: full CRUD lifecycle (create/list/view/edit/delete), frontmatter validation (missing name, missing description, malformed YAML), name validation (special chars, too long), supporting file write and view, list with multiple skills, delete without --force, CLI help"
       ],
       "priority": 6,
-      "status": "not_implemented",
+      "status": "done",
       "attempts": 0,
-      "notes": "Most complex tool. Uses pyyaml for frontmatter parsing. Atomic writes via tempfile+rename for crash safety. The --skills-dir option and tmp_path fixture are critical for test isolation."
+      "notes": "Most complex tool. Uses pyyaml for frontmatter parsing. Atomic writes via tempfile+rename for crash safety. The --skills-dir option and tmp_path fixture are critical for test isolation.",
+      "passes": true
     }
   ]
 }
