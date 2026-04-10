@@ -113,10 +113,10 @@
         "`pytest packages/tts_tool/tests -q` passes with at least 10 tests covering: text validation (empty, too long), Edge TTS generation (mocked), OpenAI TTS generation (mocked), voice override, default output path, CLI help, missing credentials for OpenAI, provider selection logic"
       ],
       "priority": 5,
-      "status": "not_implemented",
+      "status": "done",
       "attempts": 2,
       "notes": "Edge TTS is async (uses asyncio.run in the sync service wrapper). The edge-tts package is the only non-standard dependency. OpenAI TTS streams response to file.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-006",
