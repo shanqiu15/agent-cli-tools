@@ -114,7 +114,7 @@
       ],
       "priority": 5,
       "status": "not_implemented",
-      "attempts": 1,
+      "attempts": 2,
       "notes": "Edge TTS is async (uses asyncio.run in the sync service wrapper). The edge-tts package is the only non-standard dependency. OpenAI TTS streams response to file.",
       "passes": false
     },
