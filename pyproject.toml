@@ -24,6 +24,7 @@ dev = [
     "todo-tool",
     "vision-tool",
     "transcription-tool",
+    "tts-tool",
 ]
 
 [tool.uv.sources]
@@ -41,6 +42,7 @@ file-tool = { workspace = true }
 todo-tool = { workspace = true }
 vision-tool = { workspace = true }
 transcription-tool = { workspace = true }
+tts-tool = { workspace = true }
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
