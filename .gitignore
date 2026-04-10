@@ -213,7 +213,6 @@ __marimo__/
 .DS_Store
 
 # ralph-harness runtime state
-.ralph/
 
 # ralph-harness runtime state
 .ralph/*/state/
